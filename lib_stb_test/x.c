@@ -1,4 +1,6 @@
 #define STB_IMAGE_STATIC
+#define STBIR_DEFAULT_FILTER_DOWNSAMPLE  STBIR_FILTER_LANCZOS3
+
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -11,6 +13,7 @@
 #include <stdio.h> 
 
 #define JPEG_QUALITY 0
+
 
 /* tries to avoid double evaluation like max(++a, ++b) but... 
     why would anyone actually do something like that to begin with.
@@ -71,13 +74,16 @@ int main(int argc, char ** argv)
 	// but I had to load it here with 3 channels STBI_rgb, to discard alpha from odd png file.
 	
     //stbi_uc *data = stbi_load("/home/kami/misc/downl/aa.jpg", &w, &h, &nchannels, 0);  
-	stbi_uc *data = stbi_load("/home/kami/misc/_gam_pdf_run/bads/IMG_2272.png", &w, &h, &nchannels, STBI_rgb);  
+	//stbi_uc *data = stbi_load("/home/kami/misc/_gam_pdf_run/bads/IMG_2272.png", &w, &h, &nchannels, STBI_rgb);  
+	stbi_uc *data = stbi_load("/home/kami/misc/treasure_dog/TreasurePicks/Treasure_to_site/20170218_174554.jpg", &w, &h, &nchannels, STBI_rgb);  
+	
     printf("w=%d,h=%d,n=%d \n", w, h, nchannels);
     
-    int nw = MAX(w / 3, 150);
-    int nh = MAX(h / 3, 350);
-    nw = 150;
-	nh = 350;
+    int nw = w/10;
+    int nh = h/10;
+	nw = MAX(nw, 250);
+	nh = MAX(nh, 250);
+    
     int bufflen = nw * nh * STBI_rgb;
     char * out = calloc(1, bufflen); // sizeof here is colour struct uint8 r,g,b,a
     
@@ -97,7 +103,7 @@ int main(int argc, char ** argv)
 
     printf("ret=%d \n", ret);
     
-    stbi_write_png("nooo.png", nw, nh, STBI_rgb, out, stride); // force rgb 
+    //stbi_write_png("nooo.png", nw, nh, STBI_rgb, out, stride); // force rgb 
     stbi_write_jpg("nooo.jpg", nw, nh, STBI_rgb, out, JPEG_QUALITY); // force rgb
     
     
@@ -105,16 +111,16 @@ int main(int argc, char ** argv)
     // then write to file/ stream?
     // https://github.com/nothings/stb/issues/1132#issuecomment-838579144
     // func a bit too long also no checks for buff overrun.
-    custom_stbi_mem_context context;
-    context.last_pos = 0;
-    context.context = (void *)calloc(1, bufflen);
+    //custom_stbi_mem_context context;
+    //context.last_pos = 0;
+    //context.context = (void *)calloc(1, bufflen);
     
-    ret = stbi_write_jpg_to_func(custom_stbi_write_mem, &context, nw, nh, STBI_rgb, out, JPEG_QUALITY);
-    printf("ret=%d \n", ret);
+    //ret = stbi_write_jpg_to_func(custom_stbi_write_mem, &context, nw, nh, STBI_rgb, out, JPEG_QUALITY);
+    //printf("ret=%d \n", ret);
     
-    FILE* fout = fopen("nooo2.jpg", "w");
-    fwrite(context.context, context.last_pos, 1, fout);
-    fclose(fout);
+    // FILE* fout = fopen("nooo2.jpg", "w");
+    // fwrite(context.context, context.last_pos, 1, fout);
+    // fclose(fout);
     
     //===================================== 
     // JPG is written one char at a time.
@@ -147,7 +153,7 @@ int main(int argc, char ** argv)
 	
     stbi_image_free(data);
     stbi_image_free(out);
-    stbi_image_free(context.context);
+    //stbi_image_free(context.context);
     
     return 0;
 }
