@@ -1,6 +1,6 @@
 #define STB_IMAGE_STATIC
 #define STBIR_DEFAULT_FILTER_DOWNSAMPLE  STBIR_FILTER_LANCZOS3
-
+#define STBI_ONLY_JPEG
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -13,6 +13,10 @@
 #include <stdio.h> 
 
 #define JPEG_QUALITY 0
+
+/*
+gcc -o testx x.c -lm
+*/
 
 
 /* tries to avoid double evaluation like max(++a, ++b) but... 
@@ -66,7 +70,7 @@ static void custom_stbi_write_printsize(void *context, void *data, int size) {
 
 int main(int argc, char ** argv)
 {
-	stbi_convert_iphone_png_to_rgb(1);
+	//stbi_convert_iphone_png_to_rgb(1);
 	
     int w,h,nchannels,stride = 0;   
     
@@ -79,13 +83,19 @@ int main(int argc, char ** argv)
 	
     printf("w=%d,h=%d,n=%d \n", w, h, nchannels);
     
+	
     int nw = w/10;
     int nh = h/10;
 	nw = MAX(nw, 250);
 	nh = MAX(nh, 250);
     
     int bufflen = nw * nh * STBI_rgb;
-    char * out = calloc(1, bufflen); // sizeof here is colour struct uint8 r,g,b,a
+	
+	// funny it worked with calloc(1,bufflen)
+	
+    char * out = calloc(bufflen, 1); // sizeof here is colour struct uint8 r,g,b,a
+	
+	//char * out = (char*)malloc(bufflen); // sizeof here is colour struct uint8 r,g,b,a
     
 	/*
     if (nchannels == 4)
