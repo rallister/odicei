@@ -9,16 +9,21 @@
 #define uint8_t u_int8_t
 
 #define STB_IMAGE_STATIC
-//#define STBIR_DEFAULT_FILTER_DOWNSAMPLE  STBIR_FILTER_LANCZOS3
+#define STBIR_DEFAULT_FILTER_DOWNSAMPLE  STBIR_FILTER_LANCZOS3
+
+//#define STBIR_DEFAULT_FILTER_DOWNSAMPLE  STBIR_FILTER_MITCHELL
+//#define STBIR_DEFAULT_FILTER_DOWNSAMPLE  STBIR_FILTER_CATMULLROM
+//#define STBIR_DEFAULT_FILTER_DOWNSAMPLE  STBIR_FILTER_CUBICBSPLINE
+
 #define STBI_ONLY_JPEG
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 
 
-#include "stb_image.h"
-#include "stb_image_resize.h"
-#include "stb_image_write.h"
+#include "../lib_stb_test/stb_image.h"
+#include "../lib_stb_test/stb_image_resize.h"
+#include "../lib_stb_test/stb_image_write.h"
 
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
@@ -58,7 +63,7 @@ int main()
 		return 0;	
 	
 	// from https://stackoverflow.com/questions/9094691/examples-or-tutorials-of-using-libjpeg-turbos-turbojpeg
-	const int JPEG_QUALITY = 75;
+	const int JPEG_QUALITY = 60;
 	const int COLOR_COMPONENTS = 3; //rgb.
 	
 	int jpegSubsamp, width, height;
@@ -102,8 +107,8 @@ int main()
 			scalingFactors, 
 			scalingFactorCount, 
 			width, height, 
-			250, 
-			250, 
+			800, // make it bigger than target for stb to work with.
+			800, // 
 			1 );
 			
 		printf("indx=%d\n", indx);
@@ -111,7 +116,7 @@ int main()
 		if (indx > 0)
 		{
 			tjscalingfactor factor = scalingFactors[indx];
-			int scaledWidth = TJSCALED(width, factor);
+			int scaledWidth = TJSCALED(width, factor); // return those from scaling factor?  
 			int scaledHeight = TJSCALED(height, factor);
 			// 3 is rgb, part.
 			int nebuflen = 3 * scaledWidth * scaledHeight;
@@ -130,7 +135,7 @@ int main()
 	uncompressedBuffer = calloc(width* height * COLOR_COMPONENTS,1);
 	//uncompressedBuffer = malloc(width* height * COLOR_COMPONENTS);
 
-	tjDecompress2(decompressor, compressedImage, jpegSize, uncompressedBuffer, width, 0/*pitch*/, height, TJPF_RGB, TJFLAG_FASTDCT);
+	tjDecompress2(decompressor, compressedImage, jpegSize, uncompressedBuffer, width, 0/*pitch*/, height, TJPF_RGB, TJFLAG_ACCURATEDCT  );
 	
 	tjDestroy(decompressor);
 	free(compressedImage);
@@ -139,13 +144,17 @@ int main()
 	// fuck sake easier to try dropping stb in here than to find how to resize it.
 	// turns out you can't.
 	//===============================
-	int nw = 250;
-    int nh = 250;
+	int nw = 403;
+    int nh = 302;
 	    
-    int bufflen = nw * nh * 3;	
+    int bufflen = nw * nh * 3;
+	
     char * out = calloc(bufflen, 1); 
 	int ret = stbir_resize_uint8(uncompressedBuffer, width , height , 0, out, nw, nh, 0, STBI_rgb);
 	
+	//char * out = uncompressedBuffer; 
+	//nw = width;
+	//nh = height;
 	
 	// ======================================================
 	
@@ -154,7 +163,7 @@ int main()
 	
 	tjCompress2(compressor, out, nw, 0, nh, TJPF_RGB,
           &compressedBuffer, &jpegSize, jpegSubsamp, JPEG_QUALITY,
-          TJFLAG_FASTDCT); // TJSAMP_444, TJSAMP_422, <-jpegSubsamp
+          TJFLAG_ACCURATEDCT); // TJSAMP_444, TJSAMP_422, <-jpegSubsamp
 		  
 	FILE * img_out = fopen("testout.jpg", "w");
 	fwrite(compressedBuffer,1, jpegSize, img_out);
@@ -171,35 +180,26 @@ int main()
 int ra_readfile(char * filename, unsigned char ** buffer)
 {
 	struct stat sb;	
-	//memset (&sb, 0, sizeof(stat));
+	FILE * fd = NULL;
 	int ret = 0;
-	if (stat(filename, &sb) == 0 && sb.st_size > 0) {  
-		// returning off_t / casting to long kills printf.
-		ret = (int)sb.st_size;		
-		
-		FILE * fd = fopen(filename, "r");
-		if(fd != NULL)
+	if (stat(filename, &sb) == 0 && sb.st_size > 0) 
+	{  
+		ret = (int)sb.st_size;				
+		if(fd = fopen(filename, "r"))
 		{			
-			*buffer = calloc(sb.st_size, 1);	
-			
-			//*buffer = malloc(ret);	
-			//memset(*buffer, 0, ret);
-			
+			*buffer = malloc(sb.st_size);
 			if (*buffer && fread(*buffer, 1, ret, fd) == ret)
-			{				
-				fclose(fd);							
-				return ret;
-			}
+				goto ok;
 		}
-		
-		printf("oh no\n");
-		if(fd)
-			fclose(fd);
-		if (*buffer)
-			free(*buffer);
     }
 	
-	return 0;
+	not_ok:
+		if(*buffer)
+			free(*buffer);
+	ok:
+		if(fd)
+			fclose(fd);
+	return ret;
 }
 
 
@@ -224,6 +224,7 @@ int ra_tj_get_scaling_factor(
 		printf("looking for scaling factor\n");
 		// Find the scaling factor
 		// maybe could return last if exact was found, instead of -1.
+		// xxxra: width is main factor, so could find something more optimal than this.
 		if (largerThanRequired)
 		{	
 			// So if scaling factors 16, it will go down to 756 x 1008.

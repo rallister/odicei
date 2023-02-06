@@ -19,7 +19,7 @@ void Main()
 	};
 
 	scalingSettings.TrySetEncoderFormat(".jpg");
-	var data = File.ReadAllBytes(@"../../../treasure_dog/TreasurePicks/Treasure_to_site/20170218_174554.jpg");
+	var data = File.ReadAllBytes(@"../../../treasure_dog/TreasurePicks/Treasure_to_site/20221006_204641.jpg");
 	
 	var sw = Stopwatch.StartNew();
 	var outdata = new MemoryStream();

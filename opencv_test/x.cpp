@@ -20,7 +20,7 @@ int main(int argc, char** argv )
     image = cv::imread("/home/kami/misc/treasure_dog/TreasurePicks/Treasure_to_site/20221006_204641.jpg", IMREAD_COLOR);
 	
 	//cv::resize(image, outImg, cv::Size(), 0.09, 0.9, cv::INTER_LANCZOS4 );
-	cv::resize(image, outImg,  cv::Size(250,250), 0,0, cv::INTER_LANCZOS4 );
+	cv::resize(image, outImg,  cv::Size(302, 403), 0,0, cv::INTER_LANCZOS4 );
     cv::Size size = outImg.size();
 	printf("%dx%d\n", size.width, size.height);
 	

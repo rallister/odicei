@@ -841,19 +841,24 @@ static float stbir__filter_mitchell(float x, float s)
 static float stbir__filter_lanczos3(float x, float s)
 {
     STBIR__UNUSED_PARAM(s);
-
-    x = (float)fabs(x);
-
-    if (x <= FLT_MIN)
-        return 1.0f;
-
-    if (x < 3)
+	
+	if (x == 0.0) 
+        return 1.0;
+    
+	double a = 3;
+    if (x >= -a && x < a)
     {
-        float pix = 3.14159265358979323846f*x;
-        return 3*sin(pix)*sin(pix/3)/(pix*pix);
+        double pix = M_PI * x;
+        return (float)(a * sin(pix) * sin(pix/a)) / (pix*pix);
     }
 
-    return 0.0f;
+    return 0.0;
+}
+
+static float stbir__filter_testing(float x, float s)
+{
+	
+	return 0.0;
 }
 
 
